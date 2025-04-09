@@ -68,12 +68,39 @@ cd $INSTALL_DIR
 mkdir -p models/{text,image}
 
 # Download models
-wget -O models/text/model.gguf \
-  https://huggingface.co/TheBloke/deepseek-r1-1.5b-GGUF/resolve/main/deepseek-r1-1.5b.Q4_K_M.gguf || echo -e "${RED}Text model download failed!${NC}"
+# Model Download Function
+download_model() {
+  local url="$1"
+  local output="$2"
+  local description="$3"
+  
+  echo -e "${GREEN}>>> Downloading ${description}...${NC}"
+  if ! wget -q --show-progress -O "$output" "$url"; then
+    echo -e "${YELLOW}>>> Primary download failed, trying mirror...${NC}"
+    wget -q --show-progress -O "$output" "https://cdn-lfs.huggingface.co/${url#https://huggingface.co/}" || {
+      echo -e "${RED}>>> Failed to download ${description}${NC}"
+      return 1
+    }
+  fi
+}
 
-wget -O models/image/sdxl-turbo.safetensors \
-  https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sdxl-turbo-4bit.safetensors || echo -e "${RED}Image model download failed!${NC}"
+# Download models with error handling
+download_model \
+  "https://huggingface.co/TheBloke/deepseek-llm-1.3b-GGUF/resolve/main/deepseek-llm-1.3b.Q4_K_M.gguf" \
+  "models/text/model.gguf" \
+  "Text Model (1.3B 4-bit)"
 
+download_model \
+  "https://huggingface.co/radames/SD-Turbo-4bit-CPU/resolve/main/sd-turbo-4bit-cpu.safetensors" \
+  "models/image/sdxl-turbo.safetensors" \
+  "Image Model (SD-Turbo 4-bit)"
+
+# Optional upscaler (skip if fails)
+download_model \
+  "https://huggingface.co/IAHQ/RealESRGAN/resolve/main/RealESRGAN_x4plus_anime_6B-4bit.pth" \
+  "models/image/upscaler.pth" \
+  "Image Upscaler (4-bit)" || true
+  
 # Build and start
 echo -e "${GREEN}>>> Launching services...${NC}"
 docker compose up -d --build || { echo -e "${RED}Docker compose failed!${NC}"; exit 1; }
