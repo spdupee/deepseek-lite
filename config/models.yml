@@ -1,0 +1,9 @@
+text:
+  model: "/app/models/text/model.gguf"
+  max_tokens: 1024
+  temperature: 0.7
+
+image:
+  base_model: "/app/models/image/sdxl-turbo.safetensors"
+  steps: 15
+  upscale: false

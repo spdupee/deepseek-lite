@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  deepseek:
+    build:
+      context: .
+      args:
+        - UID=1000
+        - GID=1000
+    user: "${UID}:${GID}"
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./models:/app/models
+      - ./config:/app/config
+    environment:
+      - DEVICE=cpu
+      - THREADS=${THREADS:-6}
+    deploy:
+      resources:
+        limits:
+          memory: 7G
+          memory_swap: 64G
